@@ -1,26 +1,36 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --primary: #E63946;
+  /* Red */
+  --primary-hover: #D62839;
+  --secondary: #F1FAEE;
+  /* Off-white/Light Blueish */
+  --background: #FFFFFF;
+  --foreground: #1D3557;
+  /* Dark Blue/Grey */
+  --muted: #F8F9FA;
+  --border: #E5E7EB;
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--muted);
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-primary {
+  @apply bg-[var(--primary)] text-white px-4 py-2 rounded-md hover:bg-[var(--primary-hover)] transition-colors font-medium;
+}
+
+.btn-outline {
+  @apply border border-[var(--primary)] text-[var(--primary)] px-4 py-2 rounded-md hover:bg-[var(--secondary)] transition-colors font-medium;
+}
+
+.card {
+  @apply bg-white rounded-xl border border-[var(--border)] p-6 shadow-sm;
+}
+
+.input-field {
+  @apply w-full px-4 py-2 rounded-md border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent;
 }
