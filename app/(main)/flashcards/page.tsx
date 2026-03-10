@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -40,7 +40,7 @@ interface Flashcard {
   [key: string]: any;
 }
 
-export default function FlashcardsPage() {
+function FlashcardsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preSelectedMaterialId = searchParams.get("material");
@@ -700,5 +700,19 @@ export default function FlashcardsPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function FlashcardsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <Loader2 size={40} className="text-red-600 animate-spin" />
+        </div>
+      }
+    >
+      <FlashcardsContent />
+    </Suspense>
   );
 }

@@ -77,19 +77,19 @@ export default function LandingPage() {
             </div>
 
             {/* Enhanced Illustration */}
-            <div className="bg-gradient-to-br from-red-100 via-white to-red-50 rounded-3xl p-16 mx-auto max-w-5xl border-2 border-red-200 shadow-2xl">
-              <div className="flex items-center justify-center space-x-12">
-                <div className="bg-white p-6 rounded-2xl shadow-lg border border-red-100">
-                  <BookOpen size={80} className="text-red-500" />
+            <div className="bg-gradient-to-br from-red-100 via-white to-red-50 rounded-3xl p-6 sm:p-12 md:p-16 mx-auto max-w-5xl border-2 border-red-200 shadow-2xl">
+              <div className="flex flex-row items-center justify-center gap-3 sm:gap-8 md:gap-12">
+                <div className="bg-white p-3 sm:p-5 md:p-6 rounded-2xl shadow-lg border border-red-100">
+                  <BookOpen className="text-red-500 w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20" />
                 </div>
-                <div className="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-2xl shadow-lg">
-                  <Brain size={80} className="text-white" />
+                <div className="bg-gradient-to-br from-red-500 to-red-600 p-3 sm:p-5 md:p-6 rounded-2xl shadow-lg">
+                  <Brain className="text-white w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20" />
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-lg border border-red-100">
-                  <FileText size={80} className="text-red-500" />
+                <div className="bg-white p-3 sm:p-5 md:p-6 rounded-2xl shadow-lg border border-red-100">
+                  <FileText className="text-red-500 w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20" />
                 </div>
               </div>
-              <p className="text-red-600 mt-6 text-xl font-semibold">
+              <p className="text-red-600 mt-4 sm:mt-6 text-base sm:text-lg md:text-xl font-semibold">
                 AI-Powered Study Assistant
               </p>
             </div>
@@ -291,42 +291,42 @@ export default function LandingPage() {
                 out the form or reach us via email.
               </p>
 
-              <div className="space-y-8">
-                <div className="flex items-center space-x-6">
-                  <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Mail className="text-red-600" size={28} />
+              <div className="space-y-6 sm:space-y-8">
+                <div className="flex items-center space-x-4 sm:space-x-6">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Mail className="text-red-600 w-6 h-6 sm:w-7 sm:h-7" />
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500 font-bold uppercase tracking-wider">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm text-gray-500 font-bold uppercase tracking-wider">
                       Email Us
                     </p>
-                    <p className="text-xl text-gray-900 font-medium">
+                    <p className="text-base sm:text-xl text-gray-900 font-medium break-all">
                       support@studymate.com
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-6">
-                  <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Phone className="text-red-600" size={28} />
+                <div className="flex items-center space-x-4 sm:space-x-6">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Phone className="text-red-600 w-6 h-6 sm:w-7 sm:h-7" />
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500 font-bold uppercase tracking-wider">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm text-gray-500 font-bold uppercase tracking-wider">
                       Call Us
                     </p>
-                    <p className="text-xl text-gray-900 font-medium">
+                    <p className="text-base sm:text-xl text-gray-900 font-medium">
                       +1 (555) 123-4567
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-6">
-                  <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <MapPin className="text-red-600" size={28} />
+                <div className="flex items-center space-x-4 sm:space-x-6">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <MapPin className="text-red-600 w-6 h-6 sm:w-7 sm:h-7" />
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500 font-bold uppercase tracking-wider">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm text-gray-500 font-bold uppercase tracking-wider">
                       Location
                     </p>
-                    <p className="text-xl text-gray-900 font-medium">
+                    <p className="text-base sm:text-xl text-gray-900 font-medium">
                       San Francisco, CA
                     </p>
                   </div>
