@@ -168,8 +168,8 @@ export default function MaterialDetailPage() {
     toast.loading("Regenerating summary...", { id: "regen" });
 
     try {
-      // Use endpoint: POST /study-materials/{id}/generate-summary?force=true
-      await api.post(`/study-materials/${id}/generate-summary?force=true`);
+      // Use endpoint: POST /materials/{id}/generate-summary?force=true
+      await api.post(`/materials/${id}/generate-summary?force=true`);
 
       toast.success("Summary Regenerated!", { id: "regen" });
       // Reload page to see new summary

@@ -1,12 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BookOpen, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function LandingHeader() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<{ name: string; role?: number } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+    if (token && storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+        setIsLoggedIn(true);
+      } catch {
+        setIsLoggedIn(false);
+      }
+    }
+  }, []);
 
   const navigateTo = (path: string) => {
     router.push(path);
@@ -20,6 +37,8 @@ export default function LandingHeader() {
       setIsMenuOpen(false);
     }
   };
+
+  const dashboardPath = user?.role === 2 ? "/lecturer-dashboard" : "/dashboard";
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -63,20 +82,34 @@ export default function LandingHeader() {
             </button>
           </nav>
 
-          {/* Desktop Auth Buttons */}
+          {/* Desktop Auth / Profile Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <button
-              onClick={() => navigateTo("/login")}
-              className="px-6 py-2 text-red-600 hover:text-red-700 font-medium transition-colors border border-red-200 rounded-lg hover:border-red-300"
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => navigateTo("/signup")}
-              className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 font-medium transition-all shadow-lg hover:shadow-xl"
-            >
-              Create Account
-            </button>
+            {isLoggedIn ? (
+              <button
+                onClick={() => navigateTo(dashboardPath)}
+                className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 font-medium transition-all shadow-lg hover:shadow-xl"
+              >
+                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold uppercase">
+                  {user?.name?.charAt(0) || "U"}
+                </div>
+                Go to Dashboard
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigateTo("/login")}
+                  className="px-6 py-2 text-red-600 hover:text-red-700 font-medium transition-colors border border-red-200 rounded-lg hover:border-red-300"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => navigateTo("/signup")}
+                  className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 font-medium transition-all shadow-lg hover:shadow-xl"
+                >
+                  Create Account
+                </button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -120,18 +153,29 @@ export default function LandingHeader() {
               Contact
             </button>
             <div className="border-t border-gray-100 my-2 pt-2 space-y-2">
-              <button
-                onClick={() => navigateTo("/login")}
-                className="block w-full text-center px-4 py-3 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 font-medium transition-colors"
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => navigateTo("/signup")}
-                className="block w-full text-center px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 font-medium transition-all shadow-md"
-              >
-                Create Account
-              </button>
+              {isLoggedIn ? (
+                <button
+                  onClick={() => navigateTo(dashboardPath)}
+                  className="block w-full text-center px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 font-medium transition-all shadow-md"
+                >
+                  Go to Dashboard
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => navigateTo("/login")}
+                    className="block w-full text-center px-4 py-3 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 font-medium transition-colors"
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    onClick={() => navigateTo("/signup")}
+                    className="block w-full text-center px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 font-medium transition-all shadow-md"
+                  >
+                    Create Account
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

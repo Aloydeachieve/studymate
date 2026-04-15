@@ -5,12 +5,11 @@ import {
   Search,
   Bell,
   Menu,
-  User,
   Settings,
   LogOut,
   Home,
   AlertCircle,
-  Check,
+  LayoutDashboard,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -24,15 +23,16 @@ interface TopBarProps {
 const TopBar = ({ title, onMenuClick }: TopBarProps) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [user, setUser] = useState<{ name: string; username?: string } | null>(
-    null,
-  );
+  const [user, setUser] = useState<{
+    name: string;
+    username?: string;
+    role?: number;
+  } | null>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // Fetch user from localStorage
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
@@ -75,17 +75,15 @@ const TopBar = ({ title, onMenuClick }: TopBarProps) => {
       }
     } catch (error) {
       console.error("Logout failed", error);
-      // Force logout on error
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       router.push("/login");
     }
   };
 
-  // ... (rest of logic)
+  // Determine which dashboard to go to based on role
+  const dashboardPath = user?.role === 2 ? "/lecturer-dashboard" : "/dashboard";
 
-  // Re-evaluating: easiest is to replace the whole file content or a large chunk including imports.
-  // The file is small enough.
   return (
     <header className="h-16 bg-white border-b border-[var(--border)] flex items-center justify-between px-4 md:px-8 sticky top-0 z-10">
       <div className="flex items-center gap-4">
@@ -135,7 +133,6 @@ const TopBar = ({ title, onMenuClick }: TopBarProps) => {
                 </Link>
               </div>
               <div className="max-h-80 overflow-y-auto">
-                {/* Mock notifications used directly here for now or re-inserted if we removed them from logic above, but better to keep them in state or var */}
                 {[
                   {
                     id: 1,
@@ -234,12 +231,13 @@ const TopBar = ({ title, onMenuClick }: TopBarProps) => {
                   <Home size={16} />
                   Home
                 </Link>
+                {/* Role-based dashboard link */}
                 <Link
-                  href="/dashboard"
+                  href={dashboardPath}
                   className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   onClick={() => setShowProfile(false)}
                 >
-                  <div className="w-4 h-4 rounded-[4px] border border-current" />
+                  <LayoutDashboard size={16} />
                   Dashboard
                 </Link>
                 <Link

@@ -88,13 +88,15 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         // Parallel fetching
-        const [materialsRes, statsRes, recsRes] = await Promise.all([
-          api.get("/materials"),
-          api
-            .get("/study-sessions/stats")
-            .catch((e) => ({ data: { total_minutes: 0, today_minutes: 0 } })), // Fallback if 404/error
-          api.get("/user/recommendations").catch((e) => ({ data: [] })),
-        ]);
+        const [materialsRes, statsRes, recsRes, summariesCountRes] =
+          await Promise.all([
+            api.get("/materials"),
+            api
+              .get("/study-sessions/stats")
+              .catch((e) => ({ data: { total_minutes: 0, today_minutes: 0 } })),
+            api.get("/user/recommendations").catch((e) => ({ data: [] })),
+            api.get("/user/summaries/count").catch((e) => ({ data: null })),
+          ]);
 
         const materials = materialsRes.data || [];
         const sessionStats = statsRes.data || {
@@ -104,9 +106,16 @@ export default function Dashboard() {
         const recommendations = recsRes.data || [];
 
         // Stats Calculation
-        const totalSummaries = materials.filter(
-          (m: any) => m.summary && m.summary.length > 0,
-        ).length;
+        // Use dedicated count endpoint if available, otherwise count materials with summaries
+        const hasSummary = (m: any) =>
+          (m.summary && m.summary.trim().length > 0) ||
+          (m.summary_text && m.summary_text.trim().length > 0) ||
+          m.has_summary === true;
+
+        const totalSummaries =
+          summariesCountRes.data?.count != null
+            ? summariesCountRes.data.count
+            : materials.filter(hasSummary).length;
 
         // Use the count fields provided by backend
         const totalFlashcards = materials.reduce(
@@ -133,7 +142,7 @@ export default function Dashboard() {
 
         // Recent Summaries
         const sorted = [...materials]
-          .filter((m: any) => m.summary || m.summary_text)
+          .filter(hasSummary)
           .sort(
             (a: any, b: any) =>
               new Date(b.created_at || b.date).getTime() -
@@ -354,7 +363,7 @@ export default function Dashboard() {
           </button>
 
           <button
-            onClick={() => navigateTo("/quizzes")}
+            onClick={() => navigateTo("/quiz")}
             className="p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-green-400 hover:bg-green-50 transition-colors text-center"
           >
             <BookOpen size={32} className="mx-auto text-gray-400 mb-2" />
