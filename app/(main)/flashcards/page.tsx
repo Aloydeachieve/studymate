@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "react-hot-toast";
+import Skeleton, { CardSkeleton } from "@/components/Skeleton";
 
 // Local interfaces based on API expectation
 interface Material {
@@ -268,8 +269,13 @@ function FlashcardsContent() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {loadingMaterials && (
-              <div className="col-span-full text-center py-10">
-                Loading materials...
+              <div className="col-span-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <CardSkeleton />
+                <CardSkeleton />
+                <CardSkeleton />
+                <CardSkeleton />
+                <CardSkeleton />
+                <CardSkeleton />
               </div>
             )}
 
@@ -344,11 +350,18 @@ function FlashcardsContent() {
                 min="5"
                 max="20"
                 value={quantity}
-                onChange={(e) =>
-                  setQuantity(
-                    Math.max(5, Math.min(20, parseInt(e.target.value) || 5)),
-                  )
-                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "") {
+                    setQuantity(0 as any);
+                    return;
+                  }
+                  const num = parseInt(val);
+                  if (!isNaN(num)) setQuantity(num);
+                }}
+                onBlur={() => {
+                  setQuantity(Math.max(5, Math.min(20, quantity || 5)));
+                }}
                 className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-2">

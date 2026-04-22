@@ -23,6 +23,8 @@ interface TopBarProps {
 const TopBar = ({ title, onMenuClick }: TopBarProps) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [user, setUser] = useState<{
     name: string;
     username?: string;
@@ -63,6 +65,27 @@ const TopBar = ({ title, onMenuClick }: TopBarProps) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await api.get("/notifications");
+        const data = res.data.notifications || res.data || [];
+        setNotifications(data);
+        const unread = data.filter((n: any) => !n.read_at).length;
+        setUnreadCount(unread);
+      } catch (e) {
+        console.error("Failed to fetch notifications", e);
+      }
+    };
+
+    if (user) {
+      fetchNotifications();
+      // Optional: Polling every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -118,7 +141,11 @@ const TopBar = ({ title, onMenuClick }: TopBarProps) => {
             className="relative p-2 text-gray-500 hover:text-[var(--primary)] transition-colors"
           >
             <Bell size={20} />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center border-2 border-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </button>
 
           {showNotifications && (
@@ -133,49 +160,49 @@ const TopBar = ({ title, onMenuClick }: TopBarProps) => {
                 </Link>
               </div>
               <div className="max-h-80 overflow-y-auto">
-                {[
-                  {
-                    id: 1,
-                    title: "Flashcard due",
-                    message: "ML review needed",
-                    type: "urgent",
-                    time: "10m",
-                  },
-                  {
-                    id: 2,
-                    title: "New Material",
-                    message: "Calculus notes added",
-                    type: "info",
-                    time: "2h",
-                  },
-                ].map((notification) => (
-                  <div
-                    key={notification.id}
-                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-none"
-                    onClick={() => router.push("/notifications")}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="mt-1">
-                        {notification.type === "urgent" ? (
-                          <AlertCircle size={16} className="text-red-500" />
-                        ) : (
-                          <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {notification.title}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {notification.message}
-                        </p>
-                        <p className="text-[10px] text-gray-400 mt-1">
-                          {notification.time} ago
-                        </p>
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-gray-500 text-sm">
+                    No notifications yet
+                  </div>
+                ) : (
+                  notifications.slice(0, 5).map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-none ${
+                        !notification.read_at ? "bg-red-50/30" : ""
+                      }`}
+                      onClick={() => {
+                        setShowNotifications(false);
+                        router.push("/notifications");
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1">
+                          {notification.type === "urgent" ? (
+                            <AlertCircle size={16} className="text-red-500" />
+                          ) : (
+                            <div
+                              className={`w-2 h-2 rounded-full mt-1.5 ${
+                                !notification.read_at ? "bg-red-500" : "bg-gray-300"
+                              }`}
+                            />
+                          )}
+                        </div>
+                        <div>
+                          <p className={`text-sm ${!notification.read_at ? "font-bold text-gray-900" : "font-medium text-gray-600"}`}>
+                            {notification.title || notification.data?.title}
+                          </p>
+                          <p className="text-xs text-gray-500 line-clamp-1">
+                            {notification.message || notification.data?.message}
+                          </p>
+                          <p className="text-[10px] text-gray-400 mt-1">
+                            {notification.created_at_human || "Just now"}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
               <div className="px-4 py-2 border-t border-gray-100 text-center">
                 <button

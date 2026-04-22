@@ -13,6 +13,8 @@ import {
   Upload,
   Zap,
 } from "lucide-react";
+import { CardSkeleton, ListSkeleton } from "@/components/Skeleton";
+import { toast } from "react-hot-toast";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -87,75 +89,53 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Parallel fetching
-        const [materialsRes, statsRes, recsRes, summariesCountRes] =
-          await Promise.all([
-            api.get("/materials"),
-            api
-              .get("/study-sessions/stats")
-              .catch((e) => ({ data: { total_minutes: 0, today_minutes: 0 } })),
-            api.get("/user/recommendations").catch((e) => ({ data: [] })),
-            api.get("/user/summaries/count").catch((e) => ({ data: null })),
-          ]);
+        const [userStatsRes, recsRes] = await Promise.all([
+          api.get("/user/stats"),
+          api.get("/user/recommendations").catch((e) => ({ data: [] })),
+        ]);
 
-        const materials = materialsRes.data || [];
-        const sessionStats = statsRes.data || {
-          total_minutes: 0,
-          today_minutes: 0,
-        };
+        const { stats: userStats, recent_summaries } = userStatsRes.data;
         const recommendations = recsRes.data || [];
 
         // Stats Calculation
-        // Use dedicated count endpoint if available, otherwise count materials with summaries
-        const hasSummary = (m: any) =>
-          (m.summary && m.summary.trim().length > 0) ||
-          (m.summary_text && m.summary_text.trim().length > 0) ||
-          m.has_summary === true;
-
-        const totalSummaries =
-          summariesCountRes.data?.count != null
-            ? summariesCountRes.data.count
-            : materials.filter(hasSummary).length;
-
-        // Use the count fields provided by backend
-        const totalFlashcards = materials.reduce(
-          (acc: number, m: any) => acc + (m.flashcards_count || 0),
-          0,
-        );
-        const totalQuizzes = materials.reduce(
-          (acc: number, m: any) => acc + (m.quizzes_count || 0),
-          0,
-        );
-
-        // Initialize session minutes from backend "today_minutes"
-        // If "today_minutes" is passed, we should respect it + any local session increment?
-        // Actually, simpler to just set the display value based on 'today_minutes' + local session starting now.
-        // But let's just use what stats endpoint gave us for the initial load
-        setSessionMinutes(sessionStats.today_minutes || 0);
+        setSessionMinutes(userStats.today_study_minutes || 0);
 
         setStats((prev) => [
-          { ...prev[0], value: totalSummaries.toString() },
-          { ...prev[1], value: totalFlashcards.toString() },
-          { ...prev[2], value: totalQuizzes.toString() },
-          { ...prev[3], value: "0m" }, // Will be updated by useEffect dependency on sessionMinutes
+          {
+            ...prev[0],
+            value: (
+              userStats.summaries_count ??
+              userStats.summaries ??
+              0
+            ).toString(),
+          },
+          {
+            ...prev[1],
+            value: (
+              userStats.flashcards_count ??
+              userStats.flashcards ??
+              0
+            ).toString(),
+          },
+          {
+            ...prev[2],
+            value: (
+              userStats.quizzes_count ??
+              userStats.quizzes ??
+              0
+            ).toString(),
+          },
+          { ...prev[3], value: "0m" },
         ]);
 
         // Recent Summaries
-        const sorted = [...materials]
-          .filter(hasSummary)
-          .sort(
-            (a: any, b: any) =>
-              new Date(b.created_at || b.date).getTime() -
-              new Date(a.created_at || a.date).getTime(),
-          );
-
         setRecentSummaries(
-          sorted.slice(0, 3).map((m: any) => ({
-            id: m.id,
-            title: m.title,
-            subject: m.subject || "General",
-            date: new Date(m.created_at || m.date).toLocaleDateString(),
-            progress: 100, // Summaries are 'done' once generated
+          (recent_summaries || []).map((s: any) => ({
+            id: s.id,
+            title: s.material?.title || "Untitled Summary",
+            subject: "General",
+            date: new Date(s.created_at).toLocaleDateString(),
+            progress: 100,
           })),
         );
 
@@ -171,6 +151,7 @@ export default function Dashboard() {
         );
       } catch (error) {
         console.error("Dashboard fetch error:", error);
+        toast.error("Failed to load dashboard statistics");
       } finally {
         setLoading(false);
       }
@@ -198,7 +179,25 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-gray-500">Loading dashboard...</div>
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-white p-6 rounded-2xl border border-gray-200">
+            <div className="h-6 w-48 bg-gray-100 rounded mb-6 animate-pulse" />
+            <ListSkeleton count={3} />
+          </div>
+          <div className="bg-white p-6 rounded-2xl border border-gray-200">
+            <div className="h-6 w-48 bg-gray-100 rounded mb-6 animate-pulse" />
+            <ListSkeleton count={3} />
+          </div>
+        </div>
+      </div>
     );
   }
 

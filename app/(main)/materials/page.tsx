@@ -23,6 +23,7 @@ import {
   Tag,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import Skeleton, { CardSkeleton, ListSkeleton } from "@/components/Skeleton";
 
 export default function MyMaterialsPage() {
   const router = useRouter();
@@ -165,8 +166,24 @@ export default function MyMaterialsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-        <div className="text-gray-500">Loading materials...</div>
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-12 w-48 rounded-xl" />
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
+            <Skeleton className="h-12 w-full" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
+        </div>
       </div>
     );
   }

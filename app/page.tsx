@@ -14,7 +14,7 @@ import {
   Send,
   Star,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LandingHeader from "@/components/LandingHeader";
 import LandingFooter from "@/components/LandingFooter";
 import { features } from "@/data/features";
@@ -24,6 +24,22 @@ import { faqs } from "@/data/faqs";
 
 export default function LandingPage() {
   const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<{ name: string; role?: number } | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+    if (token && storedUser) {
+      try {
+        const u = JSON.parse(storedUser);
+        setUser(u);
+        setIsLoggedIn(true);
+      } catch (e) {
+        setIsLoggedIn(false);
+      }
+    }
+  }, []);
 
   const navigateTo = (path: string) => {
     router.push(path);
@@ -61,19 +77,36 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <button
-                onClick={() => navigateTo("/signup")}
-                className="px-10 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full text-lg font-semibold hover:from-red-600 hover:to-red-700 transition-all shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center"
-              >
-                Get Started Free
-                <ArrowRight size={22} className="ml-3" />
-              </button>
-              <button
-                onClick={() => navigateTo("/login")}
-                className="px-10 py-4 border-2 border-red-300 text-red-600 rounded-full text-lg font-semibold hover:border-red-400 hover:bg-red-50 transition-all"
-              >
-                Sign In
-              </button>
+              {isLoggedIn ? (
+                <button
+                  onClick={() =>
+                    navigateTo(user?.role === 2 ? "/lecturer-dashboard" : "/dashboard")
+                  }
+                  className="px-10 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full text-lg font-semibold hover:from-red-600 hover:to-red-700 transition-all shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center group"
+                >
+                  Go to Dashboard
+                  <ArrowRight
+                    size={22}
+                    className="ml-3 group-hover:translate-x-1 transition-transform"
+                  />
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => navigateTo("/signup")}
+                    className="px-10 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full text-lg font-semibold hover:from-red-600 hover:to-red-700 transition-all shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center"
+                  >
+                    Get Started Free
+                    <ArrowRight size={22} className="ml-3" />
+                  </button>
+                  <button
+                    onClick={() => navigateTo("/login")}
+                    className="px-10 py-4 border-2 border-red-300 text-red-600 rounded-full text-lg font-semibold hover:border-red-400 hover:bg-red-50 transition-all"
+                  >
+                    Sign In
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Enhanced Illustration */}

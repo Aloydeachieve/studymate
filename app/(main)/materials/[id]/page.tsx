@@ -10,6 +10,7 @@ import {
   Brain,
   BookOpen,
   ChevronLeft,
+  ChevronRight,
   Share2,
   Clock,
   Calendar,
@@ -41,6 +42,12 @@ export default function MaterialDetailPage() {
     { role: "user" | "ai"; message: string }[]
   >([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Summary Versioning State
+  const [summaryVersions, setSummaryVersions] = useState<any[]>([]);
+  const [currentSummaryIdx, setCurrentSummaryIdx] = useState(0);
+  const [customPrompt, setCustomPrompt] = useState("");
+  const [showRegenPrompt, setShowRegenPrompt] = useState(false);
 
   // Regenerate State
   const [regenerating, setRegenerating] = useState(false);
@@ -85,6 +92,38 @@ export default function MaterialDetailPage() {
         } catch (recError) {
           console.warn("Failed to load recommendations", recError);
         }
+
+        // 3. Fetch Chat History (Backend Partner Advice)
+        try {
+          const chatRes = await api.get(`/study-materials/${id}/chat`);
+          if (chatRes.data && Array.isArray(chatRes.data)) {
+            // Map consistent with our frontend state
+            const history: { role: "user" | "ai"; message: string }[] =
+              chatRes.data.map((m: any) => ({
+                role: (m.sender === "user" || m.role === "user"
+                  ? "user"
+                  : "ai") as "user" | "ai",
+                message: m.message,
+              }));
+            setChatHistory(history);
+          }
+        } catch (chatError) {
+          console.warn("Failed to load chat history", chatError);
+        }
+
+        // 4. Fetch Summary Versions (Backend Partner Advice)
+        try {
+          const summaryRes = await api.get(`/study-materials/${id}/summaries`);
+          if (summaryRes.data && Array.isArray(summaryRes.data)) {
+            setSummaryVersions(summaryRes.data);
+            // Default to the first one (usually includes 'is_default')
+            const defaultIdx =
+              summaryRes.data.findIndex((s: any) => s.is_default) || 0;
+            setCurrentSummaryIdx(defaultIdx >= 0 ? defaultIdx : 0);
+          }
+        } catch (sumError) {
+          console.warn("Failed to load summary versions", sumError);
+        }
       } catch (error: any) {
         console.error("Error fetching material", error);
         toast.error("Failed to load material details");
@@ -106,10 +145,11 @@ export default function MaterialDetailPage() {
 
   const handleDownload = () => {
     if (material?.file_path) {
-      // Construct standard storage URL. Adjust if your environment differs.
+      const apiBase =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const url = material.file_path.startsWith("http")
         ? material.file_path
-        : `http://localhost:8000/storage/${material.file_path}`;
+        : `${apiBase}/storage/${material.file_path}`;
       window.open(url, "_blank");
     } else {
       toast.error("File path not available");
@@ -132,13 +172,19 @@ export default function MaterialDetailPage() {
         message: userMsg,
       });
 
-      if (res.data && res.data.data && res.data.data.ai_message) {
+      // Backend partner says it returns user_message and ai_message objects
+      if (res.data && res.data.user_message && res.data.ai_message) {
+        setChatHistory((prev) => [
+          ...prev,
+          { role: "ai", message: res.data.ai_message.message },
+        ]);
+      } else if (res.data && res.data.data && res.data.data.ai_message) {
+        // Fallback for previous structure
         setChatHistory((prev) => [
           ...prev,
           { role: "ai", message: res.data.data.ai_message.message },
         ]);
       } else {
-        // Fallback if structure differs
         setChatHistory((prev) => [
           ...prev,
           {
@@ -169,10 +215,14 @@ export default function MaterialDetailPage() {
 
     try {
       // Use endpoint: POST /materials/{id}/generate-summary?force=true
-      await api.post(`/materials/${id}/generate-summary?force=true`);
+      await api.post(`/materials/${id}/generate-summary?force=true`, {
+        custom_prompt: customPrompt,
+      });
 
       toast.success("Summary Regenerated!", { id: "regen" });
-      // Reload page to see new summary
+      setCustomPrompt("");
+      setShowRegenPrompt(false);
+      // Reload page to see new summary list
       window.location.reload();
     } catch (e) {
       console.error("Regeneration failed", e);
@@ -182,11 +232,17 @@ export default function MaterialDetailPage() {
     }
   };
 
+  const activeSummary =
+    summaryVersions.length > 0
+      ? summaryVersions[currentSummaryIdx]
+      : material?.summary_data || material;
+
   // --- Parser Logic (Robust User Choice) ---
   let analysisResult = {
-    summary: material?.summary || "",
-    topics: material?.summary_topics || [],
-    keyTerms: material?.summary_key_terms || [],
+    summary: activeSummary?.summary_text || activeSummary?.summary || "",
+    topics: activeSummary?.topics || activeSummary?.summary_topics || [],
+    keyTerms:
+      activeSummary?.key_terms || activeSummary?.summary_key_terms || [],
     difficulty: "Medium",
     estimatedStudyTime: "5 min",
   };
@@ -377,11 +433,42 @@ export default function MaterialDetailPage() {
                       AI Summary
                     </span>
                   </h2>
-                  <div className="flex space-x-2">
+                  <div className="flex items-center space-x-2">
+                    {summaryVersions.length > 1 && (
+                      <div className="flex items-center bg-gray-100 rounded-lg p-1 mr-2">
+                        <button
+                          onClick={() =>
+                            setCurrentSummaryIdx((val) =>
+                              val > 0 ? val - 1 : val,
+                            )
+                          }
+                          disabled={currentSummaryIdx === 0}
+                          className="p-1 text-gray-500 hover:text-red-600 disabled:opacity-30"
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <span className="text-xs font-medium px-2 text-gray-600">
+                          {currentSummaryIdx + 1} / {summaryVersions.length}
+                        </span>
+                        <button
+                          onClick={() =>
+                            setCurrentSummaryIdx((val) =>
+                              val < summaryVersions.length - 1 ? val + 1 : val,
+                            )
+                          }
+                          disabled={
+                            currentSummaryIdx === summaryVersions.length - 1
+                          }
+                          className="p-1 text-gray-500 hover:text-red-600 disabled:opacity-30"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    )}
                     <button
-                      onClick={handleRegenerateSummary}
+                      onClick={() => setShowRegenPrompt(!showRegenPrompt)}
                       disabled={regenerating}
-                      className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                      className={`p-2 rounded-lg transition-colors ${showRegenPrompt ? "bg-red-100 text-red-600" : "text-gray-400 hover:text-red-600 hover:bg-red-50"}`}
                       title="Regenerate Summary"
                     >
                       <RefreshCw
@@ -391,6 +478,33 @@ export default function MaterialDetailPage() {
                     </button>
                   </div>
                 </div>
+
+                {/* Custom Prompt Input */}
+                {showRegenPrompt && (
+                  <div className="mb-6 animate-in slide-in-from-top duration-300">
+                    <div className="bg-red-50 rounded-xl p-4 border border-red-100">
+                      <p className="text-xs font-medium text-red-700 mb-2 uppercase tracking-wider">
+                        Custom Regeneration Prompt
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={customPrompt}
+                          onChange={(e) => setCustomPrompt(e.target.value)}
+                          placeholder="e.g., 'Make it simpler' or 'Focus on key terms'..."
+                          className="flex-1 text-sm border-gray-200 rounded-lg focus:ring-red-500 focus:border-red-500"
+                        />
+                        <button
+                          onClick={handleRegenerateSummary}
+                          disabled={regenerating}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                        >
+                          Go
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {analysisResult.summary ? (
                   <div className="prose prose-red max-w-none">
@@ -474,7 +588,15 @@ export default function MaterialDetailPage() {
                           : "bg-white border border-blue-100 text-gray-800"
                       }`}
                     >
-                      {chat.message}
+                      {chat.role === "user" ? (
+                        chat.message
+                      ) : (
+                        <div className="prose prose-sm prose-blue max-w-none">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {chat.message}
+                          </ReactMarkdown>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
